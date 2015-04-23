@@ -86,7 +86,7 @@ void OpenTmr1(void)
     PIE1=0b00000001;
     PIR1bits.TMR1IF=0;
     T1CON=0b00110000; //setup for FOSC/4 and 1/8 prescale
-    TMR1 = Timer1Period; //setup for 100Hz
+    TMR1 = TMRPeriod_ms_to_instr(Timer1Period_ms, 8, 16); //setup for 100Hz
     T1CONbits.TMR1ON=1;
 }
 
@@ -203,3 +203,11 @@ unsigned int calculateSpeedPID(unsigned int currentValue, unsigned int setpoint)
     return controlOutput;
 }
 
+unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsigned char resolution) {
+    unsigned long instr;
+    unsigned long ret;
+    instr = (unsigned long)ms * (SYS_FREQ / 1000) / prescaler / 4;
+    ret = 1 << resolution - 1;
+    ret = ret - instr;
+     return (unsigned int)ret;
+}

@@ -10,14 +10,11 @@
 #define _XTAL_FREQ       10000000
 #define FCY              SYS_FREQ/4
 
-#define Timer0Period     64558 //10Hz period
- /*40535 comes from, time per instruction = TOSC = 256*4/FOSC
- so for 10MHz FOSC and 256 prescaler time per instruction = 102.4uS.
- So if we want 10Hz that is 976.6 instructions for the delay, 65535-976.6 = 64558*/
-#define Timer1Period     40535 //100Hz period
- /*40535 comes from, time per instruction = TOSC = 4/FOSC
- so for 10MHz FSOC and 1 prescaler time per instruction = 400nS.
- So if we want 100Hz that is 25000 instructions for the delay, 65535-25000 = 40535*/
+/* time per instruction = TOSC = 256*4/FOSC */
+/* timer overflow period in ms*/
+#define Timer0Period_ms     10
+#define Timer1Period_ms     10
+
 
 #define BAUD_RATE        9600 //
 
@@ -63,3 +60,4 @@ void OpenTmr1(void);
 unsigned int calculateSpeed(void);
 unsigned int calculateSpeedPID(unsigned int, unsigned int);
 
+unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsigned char resolution);
