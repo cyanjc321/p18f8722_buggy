@@ -17,13 +17,13 @@
 /******************************************************************************/
 /* Definitions                                                                */
 /******************************************************************************/
-#define forever 1
+#define loop_forever while (1)
 
 /******************************************************************************/
 /* Global Variable Declaration                                                */
 /******************************************************************************/
 
-extern volatile char RB0InterruptFlag,Timer0InterruptFlag,Timer1InterruptFlag,CaptureInterruptFlag;
+extern volatile char RB0InterruptFlag,Timer0InterruptFlag,Timer1InterruptFlag,CaptureInterruptFlag,senseRequest;
 unsigned int  encoderCount  = 0;
 unsigned char robotDirection;
 unsigned int speed, pidOutput;
@@ -37,8 +37,11 @@ unsigned int setpoint = 200; // Setpoint for the motors in RPM
 
 void main(void)
 {
+    unsigned char stop;
+
     ConfigPorts();
     ConfigMotors();
+    OpenTmr0();
     ConfigInterrupts();
 
     StartCapture(); //capture compare interrupt for encoder
@@ -48,14 +51,23 @@ void main(void)
     //disableMotors;
     SetDCPWM1(950);
 
-  while(forever){
-      if(CaptureInterruptFlag){
-        CaptureInterruptFlag = 0;
-        LATDbits.LATD0 = !LATDbits.LATD0; //toggle IO line to show interrupt
-        speed = calculateSpeed();
-        pidOutput = calculateSpeedPID(speed, setpoint);
-        SetDCPWM1(pidOutput); //duty cycle can range from 0 to 400 (0-100%)
-
+    loop_forever{
+      if (senseRequest) {
+          senseRequest = 0;
+          //sensor read in
+          //check stop
+      }
+      if (stop) {
+          disableMotors;
+      }
+      else {
+        if(CaptureInterruptFlag){
+            CaptureInterruptFlag = 0;
+            LATDbits.LATD0 = !LATDbits.LATD0; //toggle IO line to show interrupt
+            speed = calculateSpeed();
+            pidOutput = calculateSpeedPID(speed, setpoint);
+            SetDCPWM1(pidOutput); //duty cycle can range from 0 to 400 (0-100%)
+      }
 //        Displaying speed through UART
 //
 //        sprintf(str, "%d", speed);

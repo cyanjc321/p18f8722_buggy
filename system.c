@@ -72,7 +72,7 @@ void OpenTmr0(void)
     T0CONbits.T0CS = 0;     //Internal clock
     T0CONbits.PSA = 256;    // prescaler 1:256
 
-    //not used: TMR0 = Timer0Period; //setup for 10Hz
+    TMR0 = TMRPeriod_ms_to_instr(Timer0Period_ms, 256, 16);
     
     INTCONbits.TMR0IF = 0;  // Clear Timer0 overflow flag
     INTCONbits.TMR0IE = 1;  // Enable Timer0 overflow interrupt

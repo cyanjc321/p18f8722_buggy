@@ -11,6 +11,7 @@
 volatile char  RB0InterruptFlag, Timer0InterruptFlag,Timer1InterruptFlag,CaptureInterruptFlag;
 volatile unsigned char received[125]; //Enough to hold UART receive values
 volatile unsigned int timerRolloverCount;
+volatile unsigned char senseRequest;
 
 /******************************************************************************/
 /* Interrupt Routines                                                         */
@@ -32,17 +33,10 @@ void interrupt isr(void)
       timerRolloverCount++;
       LATDbits.LATD0 = !LATDbits.LATD0; //toggle IO line to show interrupt
    }
-//  if (TMR1IE && TMR1IF){ //Timer 1 interrupt
-//    TMR1IF=0;
-//    TMR1 = Timer1Period; //set back up for 100Hz
-//    Timer1InterruptFlag = 1;
-//  }
-//
-//  if(INTCONbits.INT0IF == 1) //RB0 interrupt
-//    {
-//        INTCONbits.INT0IF = 0;
-//        RB0InterruptFlag = 1;
-//    }
-  
+
+  if (TMR0IE && TMR0IF) {
+      TMR0IF = 0;
+      senseRequest = 1;
+  }
 }
 
