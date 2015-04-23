@@ -14,7 +14,11 @@
 /* timer overflow period in ms*/
 #define Timer0Period_ms     10
 
+#define STOP_ERROR_MIN     10
+
 #define BAUD_RATE        9600 //
+
+const char sensor_weight[] = {-3, -2, -1, 1, 2, 3};  //adjust these value according to relative spacing between sensors
 
 //Motor board defitions//
 #define uniPolar       {LATJbits.LATJ0 = 0;}
@@ -56,5 +60,8 @@ void OpenTmr0(void);
 
 unsigned int calculateSpeed(void);
 unsigned int calculateSpeedPID(unsigned int, unsigned int);
+
+void poll_angle(unsigned char* no_line, int* angle);
+unsigned char check_stop(int angle);
 
 unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsigned char resolution);

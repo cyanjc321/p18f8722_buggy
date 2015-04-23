@@ -37,7 +37,8 @@ unsigned int setpoint = 200; // Setpoint for the motors in RPM
 
 void main(void)
 {
-    unsigned char stop;
+    unsigned char stop, no_line;
+    int angle;
 
     ConfigPorts();
     ConfigMotors();
@@ -54,8 +55,11 @@ void main(void)
     loop_forever{
       if (senseRequest) {
           senseRequest = 0;
-          //sensor read in
-          //check stop
+          poll_angle(&no_line, &angle);
+          if (no_line)
+              stop = check_stop(angle);
+          else
+              stop = 0;
       }
       if (stop) {
           disableMotors;
@@ -67,7 +71,7 @@ void main(void)
             speed = calculateSpeed();
             pidOutput = calculateSpeedPID(speed, setpoint);
             SetDCPWM1(pidOutput); //duty cycle can range from 0 to 400 (0-100%)
-      }
+        }
 //        Displaying speed through UART
 //
 //        sprintf(str, "%d", speed);

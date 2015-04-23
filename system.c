@@ -11,6 +11,9 @@
 
 extern volatile unsigned int timerRolloverCount;
 
+static int angle_history[20];   //circular history buffer
+static unsigned char last_angle_pt;
+
 //PLEASE NOTE THESE FUNCTIONS ONLY WORK FOR 18F4520
 void OpnUSART(void)
 {
@@ -200,4 +203,44 @@ unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsi
     ret = 1 << resolution - 1;
     ret = ret - instr;
      return (unsigned int)ret;
+}
+
+void poll_angle(unsigned char* no_line, int* angle){
+    unsigned char sensor_val;
+    unsigned char i, n;
+    sensor_val = PORTF;
+    *no_line = !sensor_val;
+    *angle = 0;
+    n = 0;
+    for (i = 0; i < 6; i++) {
+        if (sensor_val & (1 << i)) {
+            *angle += sensor_weight[i];
+            n++;
+        }
+    }
+
+    *angle = *angle * 10 / n;
+}
+unsigned char check_stop(int angle){
+    unsigned char i;
+    unsigned int angle_sum;
+
+    //push angle into history;
+    last_angle_pt += 1;
+    if (last_angle_pt >= 20) last_angle_pt = 0;
+    angle_history[last_angle_pt] = angle;
+    angle_sum = 0;
+    for (i = 0; i < 20; i++)
+        angle_sum += angle_history[i];
+    if (angle_sum < STOP_ERROR_MIN)
+        return 1;
+    else
+        return 0;
+}
+
+void local_global_var_init() {
+    int i;
+    for (i = 0; i < 20; i++)
+        angle_history[i] = 0;
+    last_angle_pt = 0;
 }
