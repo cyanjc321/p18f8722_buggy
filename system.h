@@ -13,8 +13,6 @@
 /* time per instruction = TOSC = 256*4/FOSC */
 /* timer overflow period in ms*/
 #define Timer0Period_ms     10
-#define Timer1Period_ms     10
-
 
 #define BAUD_RATE        9600 //
 
@@ -55,7 +53,6 @@ void ClsUSART(void);
 void OpnUSART(void);
 
 void OpenTmr0(void);
-void OpenTmr1(void);
 
 unsigned int calculateSpeed(void);
 unsigned int calculateSpeedPID(unsigned int, unsigned int);

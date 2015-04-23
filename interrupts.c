@@ -22,13 +22,13 @@ void interrupt isr(void)
       //not using this yet
   }
 
-  if(CCP4IE & CCP4IF){ //Encoder Capture interrupt
-      CCP4IF = 0;
+  if(CCP2IE && CCP2IF){ //Encoder Capture interrupt
+      CCP2IF = 0;
       CaptureInterruptFlag = 1;
   }
   
-  if(TMR0IE && TMR0IF){ //Timer 0 interrupt
-      TMR0IF = 0;  // Clear flag
+  if(TMR1IE && TMR1IF){ //Timer 0 interrupt
+      TMR1IF = 0;  // Clear flag
       timerRolloverCount++;
       LATDbits.LATD0 = !LATDbits.LATD0; //toggle IO line to show interrupt
    }

@@ -79,17 +79,6 @@ void OpenTmr0(void)
     T0CONbits.TMR0ON = 1;
 }
 
-void OpenTmr1(void)
-{
-    //This function works on its own but conflicts with the encoder interrupts
-    //so either use this function or have encoder interrupts not both.
-    PIE1=0b00000001;
-    PIR1bits.TMR1IF=0;
-    T1CON=0b00110000; //setup for FOSC/4 and 1/8 prescale
-    TMR1 = TMRPeriod_ms_to_instr(Timer1Period_ms, 8, 16); //setup for 100Hz
-    T1CONbits.TMR1ON=1;
-}
-
 
 void ConfigInterrupts(void)
 {
@@ -122,8 +111,9 @@ void StartCapture(void)
     T3CONbits.T3CCP1 = 0; //see page 180 in data sheet
     T3CONbits.T3CCP2 = 0;
     TRISGbits.TRISG3 = 1; //input for encoder capture
-    OpenCapture4(CAPTURE_INT_ON & CAP_EVERY_16_RISE_EDGE);
-    OpenTmr0(); //Timer for testing capture module
+    OpenTimer1(TIMER_INT_ON & T1_16BIT_RW & T1_SOURCE_INT & T1_PS_1_8
+            & T1_OSC1EN_OFF & T1_SYNC_EXT_OFF & T12_CCP12_T34_CCP345);
+    OpenCapture2(CAPTURE_INT_ON & CAP_EVERY_16_RISE_EDGE);
 }
 
 void ConfigMotors(void)
@@ -142,7 +132,7 @@ void ConfigMotors(void)
   //TRISEbits.TRISE7 = 0; //Sets CCP2 as output
   //TRISGbits.TRISG3 = 0; //Sets CCP4 as output pin 8
   //TRISGbits.TRISG4 = 0; //Sets CCP5 as output pin 10
-  //OpenTimer2(T2_PS_1_4);
+  OpenTimer2(TIMER_INT_OFF & T2_PS_1_4 & T2_POST_1_1 & T12_CCP12_T34_CCP345);
   OpenPWM1(254); //10KHz PWM CCP1 RC2
 }
 
