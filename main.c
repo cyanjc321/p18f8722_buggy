@@ -42,6 +42,7 @@ void main(void)
 
     ConfigPorts();
     ConfigMotors();
+    ConfigServo();
     OpenTmr0();
     ConfigInterrupts();
 

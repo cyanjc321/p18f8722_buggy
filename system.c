@@ -10,6 +10,8 @@
 #include <p18f8722.h>
 
 extern volatile unsigned int timerRolloverCount;
+extern volatile unsigned char pwm_state;
+extern volatile unsigned int pulse_ontime;
 
 static int angle_history[20];   //circular history buffer
 static unsigned char last_angle_pt;
@@ -103,6 +105,8 @@ void ConfigPorts(void)
     TRISJbits.TRISJ2 = 0; //set RJ2 as output
     TRISDbits.TRISD0 = 0; //set RD0 as output
     TRISGbits.TRISG3 = 1; //input for encoder capture
+    TRISGbits.TRISG0 = 0;
+    TRISH = 0xff;
 }
 
 void StartCapture(void)
@@ -135,8 +139,16 @@ void ConfigMotors(void)
   //TRISEbits.TRISE7 = 0; //Sets CCP2 as output
   //TRISGbits.TRISG3 = 0; //Sets CCP4 as output pin 8
   //TRISGbits.TRISG4 = 0; //Sets CCP5 as output pin 10
-  OpenTimer2(TIMER_INT_OFF & T2_PS_1_4 & T2_POST_1_1 & T12_CCP12_T34_CCP345);
-  OpenPWM1(254); //10KHz PWM CCP1 RC2
+  OpenTimer2(TIMER_INT_OFF & T2_PS_1_1 & T2_POST_1_1 & T12_CCP12_T34_CCP345);
+  OpenPWM1(254); //40KHz PWM CCP1 RC2
+}
+
+void ConfigServo(void) {
+    OpenTimer3(TIMER_INT_ON & T3_16BIT_RW & T3_PS_1_8 & T3_SOURCE_INT & T3_SYNC_EXT_OFF);
+    pulse_ontime = PULSE_MID;
+    pwm_state = 1;
+    SERVO_OP = 0;
+    TMR3 = 65535 - (pulse_ontime);
 }
 
 unsigned int calculateSpeed(void)
@@ -167,14 +179,8 @@ unsigned int calculateSpeedPID(unsigned int currentValue, unsigned int setpoint)
     static float lastError = 0;
 
     static float pid = 0;
-    float Kp,Kd,Ki;
     unsigned int controlOutput = 0;
     static int error;
-
-    //PID Constants THESE NEED TUNING PROPERLY
-    Kp = 5;
-    Ki = 10;
-    Kd = 0;
     
     error = (int)setpoint - currentValue;
 
@@ -182,17 +188,17 @@ unsigned int calculateSpeedPID(unsigned int currentValue, unsigned int setpoint)
     integral   = 0.6 * integral;    //damping integral
     derivative = error - lastError;
 
-    pid =  (Kp * error);
-    pid += (Kd * derivative);
-    pid += (Ki * integral);
+    pid =  (SPEED_KP * error);
+    pid += (SPEED_KD * derivative);
+    pid += (SPEED_KI * integral);
 
     lastError = error;
 
-    if(pid > 1024){pid = 1024;}
+    if(pid > 1023){pid = 1023;}
     else if (pid < 0){pid = 0;}
 
     controlOutput = (unsigned int)pid;
-    controlOutput = 1024-controlOutput;
+    controlOutput = 1023-controlOutput;
     return controlOutput;
 }
 
@@ -208,7 +214,7 @@ unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsi
 void poll_angle(unsigned char* no_line, int* angle){
     unsigned char sensor_val;
     unsigned char i, n;
-    sensor_val = PORTF;
+    sensor_val = PORTH;
     *no_line = !sensor_val;
     *angle = 0;
     n = 0;
@@ -219,7 +225,7 @@ void poll_angle(unsigned char* no_line, int* angle){
         }
     }
 
-    *angle = *angle * 10 / n;
+    *angle = *angle / n;
 }
 unsigned char check_stop(int angle){
     unsigned char i;
@@ -231,7 +237,7 @@ unsigned char check_stop(int angle){
     angle_history[last_angle_pt] = angle;
     angle_sum = 0;
     for (i = 0; i < 20; i++)
-        angle_sum += angle_history[i];
+        angle_sum += angle_history[i]; //TODO merge this with integral
     if (angle_sum < STOP_ERROR_MIN)
         return 1;
     else

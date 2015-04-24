@@ -18,7 +18,27 @@
 
 #define BAUD_RATE        9600 //
 
-const char sensor_weight[] = {-3, -2, -1, 1, 2, 3};  //adjust these value according to relative spacing between sensors
+//const char sensor_weight[] = {-43, -26, -7, 6, 27, 43};  //adjust these value according to relative spacing between sensors
+/* sensor config: pair 6 5 4 3 2 1 */
+const char sensor_weight[] = {43, 27, 6, -7, -26, -43};
+
+#define SPEED_KP    5.0
+#define SPEED_KI    10.0
+#define SPEED_KD    0.0
+
+#define SERVO_KP    1.0
+#define SERVO_KI    0.0
+#define SERVO_KD    0.0
+
+//servo output pin
+#define SERVO_OP       LATGbits.LATG0
+
+/* pulse period = 8 * 4 / FOSC * 5500 = 4400 us */
+#define PULSE_PERIOD    5500
+#define PULSE_MIN       1250    //-60 degree
+#define PULSE_MAX       2500    //60 degree
+#define PULSE_MID       1875    //0 degree
+
 
 //Motor board defitions//
 #define uniPolar       {LATJbits.LATJ0 = 0;}
@@ -48,7 +68,7 @@ void ConfigInterrupts(void);
 void ConfigPorts(void);
 
 void ConfigMotors(void);
-
+void ConfigServo(void);
 void StartCapture(void);
 
 void interrupt isr(void);
