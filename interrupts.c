@@ -11,9 +11,10 @@
 volatile char  RB0InterruptFlag, Timer0InterruptFlag,Timer1InterruptFlag,CaptureInterruptFlag;
 volatile unsigned char received[125]; //Enough to hold UART receive values
 volatile unsigned int timerRolloverCount;
-volatile unsigned char senseRequest;
+volatile unsigned char senseRequest, new_val_read;
 volatile unsigned char pwm_state;
 volatile unsigned int pulse_ontime;
+volatile unsigned char pot_value;
 
 /******************************************************************************/
 /* Interrupt Routines                                                         */
@@ -53,6 +54,12 @@ void interrupt isr(void)
           SERVO_OP = 0;
           TMR3 = 65535 - (pulse_ontime);
       }
+  }
+
+  if (ADIE && ADIF) {
+      ADIF = 0;
+      pot_value = ReadADC() >> 2;
+      new_val_read = 1;
   }
 }
 

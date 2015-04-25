@@ -12,9 +12,12 @@
 extern volatile unsigned int timerRolloverCount;
 extern volatile unsigned char pwm_state;
 extern volatile unsigned int pulse_ontime;
+extern volatile unsigned char pot_value, new_val_read;
 
 static int last_angle;
 static int angle_integral;
+static float servo_angle;
+
 
 //PLEASE NOTE THESE FUNCTIONS ONLY WORK FOR 18F4520
 void OpnUSART(void)
@@ -100,13 +103,20 @@ void ConfigPorts(void)
 /******************************************************************************/
 /* General port configuration, a lot of this is duplicated in other functions */
 /******************************************************************************/
-    ADCON1 = 0x0F;
     TRISBbits.RB0 = 1; //set RB0 as Input
     TRISJbits.TRISJ2 = 0; //set RJ2 as output
     TRISDbits.TRISD0 = 0; //set RD0 as output
     TRISGbits.TRISG3 = 1; //input for encoder capture
     TRISGbits.TRISG0 = 0;
     TRISH = 0xff;
+    OpenADC(ADC_FOSC_4 & ADC_RIGHT_JUST & ADC_12_TAD,
+            ADC_CH0 & ADC_INT_ON & ADC_VREFPLUS_VDD & ADC_VREFMINUS_VSS,
+            3);
+}
+
+void start_adc(void) {
+    SetChanADC(ADC_CH0);
+    ConvertADC();
 }
 
 void StartCapture(void)
@@ -212,20 +222,31 @@ unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsi
 }
 
 void read_angle(unsigned char* no_line, int* angle_error){
-    unsigned char sensor_val;
-    unsigned char i, n;
-    sensor_val = PORTH;
-    *no_line = !sensor_val;
-    *angle_error = 0;
-    n = 0;
-    for (i = 0; i < 6; i++) {
-        if (sensor_val & (1 << i)) {
-            *angle_error += sensor_weight[i];
-            n++;
-        }
-    }
+    //TODO check if neccessary to scale angle_error to achieve better precision
+    //unsigned char sensor_val;
+    //unsigned char i, n;
+    //sensor_val = PORTH;
+    //*no_line = !sensor_val;
+    //*angle_error = 0;
+    //n = 0;
+    //for (i = 0; i < 6; i++) {
+    //    if (sensor_val & (1 << i)) {
+    //        *angle_error += sensor_weight[i];
+    //        n++;
+    //    }
+    //}
 
-    *angle_error = *angle_error / n;
+    //*angle_error = *angle_error / n;
+
+    //servo test
+    float pot_angle;
+    start_adc();
+    while (!new_val_read);
+    new_val_read = 0;
+    pot_angle = (float)pot_value / 255.0 * 120.0;
+    pot_angle -= 60;
+    *angle_error = (int)(pot_angle - servo_angle);
+    *no_line = 1;
 }
 unsigned char check_stop(){
     if (angle_integral < STOP_ERROR_MIN)
@@ -237,18 +258,19 @@ unsigned char check_stop(){
 void local_global_var_init() {
     angle_integral = 0;
     last_angle = 0;
+    new_val_read = 0 ;
 }
 
 void direction_pid(int angle_error){
-    float servo_angle;
     int angle_derivative;
 
     angle_integral += angle_error;
     angle_derivative = angle_error - last_angle;
 
     servo_angle = SERVO_KP * angle_error + SERVO_KI * angle_integral + SERVO_KD * angle_derivative;
-    if (servo_angle < -60) servo_angle = -60;
-    if (servo_angle > 60)  servo_angle = 60;
+    if (servo_angle < -60)     servo_angle = -60;
+    else
+        if (servo_angle > 60)  servo_angle = 60;
     pulse_ontime = (unsigned int)(PULSE_MID + PULSE_ANGLE_RATIO * servo_angle);
 
     last_angle = angle_error;

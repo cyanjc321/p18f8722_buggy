@@ -71,6 +71,7 @@ void ConfigPorts(void);
 void ConfigMotors(void);
 void ConfigServo(void);
 void StartCapture(void);
+void start_adc(void);
 
 void interrupt isr(void);
 
@@ -87,3 +88,5 @@ unsigned char check_stop(void);
 
 unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsigned char resolution);
 void direction_pid(int angle);
+
+void local_global_var_init(void);

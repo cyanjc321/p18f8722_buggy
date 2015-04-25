@@ -40,6 +40,7 @@ void main(void)
     unsigned char stop, no_line;
     int angle;
 
+    local_global_var_init();
     ConfigPorts();
     ConfigMotors();
     ConfigServo();
