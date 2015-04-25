@@ -13,8 +13,8 @@ extern volatile unsigned int timerRolloverCount;
 extern volatile unsigned char pwm_state;
 extern volatile unsigned int pulse_ontime;
 
-static int angle_history[20];   //circular history buffer
-static unsigned char last_angle_pt;
+static int last_angle;
+static int angle_integral;
 
 //PLEASE NOTE THESE FUNCTIONS ONLY WORK FOR 18F4520
 void OpnUSART(void)
@@ -211,42 +211,45 @@ unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsi
      return (unsigned int)ret;
 }
 
-void poll_angle(unsigned char* no_line, int* angle){
+void read_angle(unsigned char* no_line, int* angle_error){
     unsigned char sensor_val;
     unsigned char i, n;
     sensor_val = PORTH;
     *no_line = !sensor_val;
-    *angle = 0;
+    *angle_error = 0;
     n = 0;
     for (i = 0; i < 6; i++) {
         if (sensor_val & (1 << i)) {
-            *angle += sensor_weight[i];
+            *angle_error += sensor_weight[i];
             n++;
         }
     }
 
-    *angle = *angle / n;
+    *angle_error = *angle_error / n;
 }
-unsigned char check_stop(int angle){
-    unsigned char i;
-    unsigned int angle_sum;
-
-    //push angle into history;
-    last_angle_pt += 1;
-    if (last_angle_pt >= 20) last_angle_pt = 0;
-    angle_history[last_angle_pt] = angle;
-    angle_sum = 0;
-    for (i = 0; i < 20; i++)
-        angle_sum += angle_history[i]; //TODO merge this with integral
-    if (angle_sum < STOP_ERROR_MIN)
+unsigned char check_stop(){
+    if (angle_integral < STOP_ERROR_MIN)
         return 1;
     else
         return 0;
 }
 
 void local_global_var_init() {
-    int i;
-    for (i = 0; i < 20; i++)
-        angle_history[i] = 0;
-    last_angle_pt = 0;
+    angle_integral = 0;
+    last_angle = 0;
+}
+
+void direction_pid(int angle_error){
+    float servo_angle;
+    int angle_derivative;
+
+    angle_integral += angle_error;
+    angle_derivative = angle_error - last_angle;
+
+    servo_angle = SERVO_KP * angle_error + SERVO_KI * angle_integral + SERVO_KD * angle_derivative;
+    if (servo_angle < -60) servo_angle = -60;
+    if (servo_angle > 60)  servo_angle = 60;
+    pulse_ontime = (unsigned int)(PULSE_MID + PULSE_ANGLE_RATIO * servo_angle);
+
+    last_angle = angle_error;
 }

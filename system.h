@@ -38,6 +38,7 @@ const char sensor_weight[] = {43, 27, 6, -7, -26, -43};
 #define PULSE_MIN       1250    //-60 degree
 #define PULSE_MAX       2500    //60 degree
 #define PULSE_MID       1875    //0 degree
+#define PULSE_ANGLE_RATIO 28.83 //timer cnt per degree
 
 
 //Motor board defitions//
@@ -81,7 +82,8 @@ void OpenTmr0(void);
 unsigned int calculateSpeed(void);
 unsigned int calculateSpeedPID(unsigned int, unsigned int);
 
-void poll_angle(unsigned char* no_line, int* angle);
-unsigned char check_stop(int angle);
+void read_angle(unsigned char* no_line, int* angle);
+unsigned char check_stop(void);
 
 unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsigned char resolution);
+void direction_pid(int angle);

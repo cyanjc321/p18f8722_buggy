@@ -56,9 +56,10 @@ void main(void)
     loop_forever{
       if (senseRequest) {
           senseRequest = 0;
-          poll_angle(&no_line, &angle);
+          read_angle(&no_line, &angle);
+          direction_pid(angle);
           if (no_line)
-              stop = check_stop(angle);
+              stop = check_stop();
           else
               stop = 0;
       }
