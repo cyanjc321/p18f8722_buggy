@@ -22,13 +22,15 @@
 /* sensor config: pair 6 5 4 3 2 1 */
 const char sensor_weight[] = {43, 27, 6, -7, -26, -43};
 
+unsigned int setpoint = 200; // Setpoint for the motors in RPM
 #define SPEED_KP    5.0
 #define SPEED_KI    10.0
 #define SPEED_KD    0.0
 
-#define SERVO_KP    1.0
-#define SERVO_KI    0.0
-#define SERVO_KD    0.0
+float dir_setpt = 0;
+#define SERVO_KP    2.0
+#define SERVO_KI    0.5
+#define SERVO_KD    1.0
 
 //servo output pin
 #define SERVO_OP       LATGbits.LATG0
@@ -38,7 +40,7 @@ const char sensor_weight[] = {43, 27, 6, -7, -26, -43};
 #define PULSE_MIN       1250    //-60 degree
 #define PULSE_MAX       2500    //60 degree
 #define PULSE_MID       1875    //0 degree
-#define PULSE_ANGLE_RATIO 28.83 //timer cnt per degree
+#define PULSE_ANGLE_RATIO 10.416 //timer cnt per degree
 
 
 //Motor board defitions//

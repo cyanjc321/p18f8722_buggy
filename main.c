@@ -27,8 +27,6 @@ unsigned char robotDirection;
 unsigned int speed, pidOutput;
 char str[15];
 
-unsigned int setpoint = 200; // Setpoint for the motors in RPM
-
 /******************************************************************************/
 /* Main Program                                                               */
 /******************************************************************************/

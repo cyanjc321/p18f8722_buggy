@@ -13,6 +13,7 @@
 static int last_angle;
 static int angle_integral;
 static float servo_angle;
+static unsigned char sensor_reading[6];
 
 
 //PLEASE NOTE THESE FUNCTIONS ONLY WORK FOR 18F4520
@@ -103,18 +104,21 @@ void ConfigPorts(void)
     TRISJbits.TRISJ2 = 0; //set RJ2 as output
     TRISDbits.TRISD0 = 0; //set RD0 as output
     TRISGbits.TRISG3 = 1; //input for encoder capture
-    TRISGbits.TRISG0 = 0;
-    TRISH = 0xff;
-    OpenADC(ADC_FOSC_4 & ADC_RIGHT_JUST & ADC_12_TAD,
+    TRISGbits.RG0 = 0;
+    OpenADC(ADC_FOSC_4 & ADC_RIGHT_JUST & ADC_20_TAD,
             ADC_CH0 & ADC_INT_OFF & ADC_VREFPLUS_VDD & ADC_VREFMINUS_VSS,
-            3);
+            0);
 }
 
-unsigned char read_adc(void) {
-    SetChanADC(ADC_CH0);
-    ConvertADC();
-    while (BusyADC());
-    return ReadADC() >> 2;
+void read_adc(void) {
+    int i;
+    static const char sensor_ch[] = {ADC_CH0, ADC_CH12, ADC_CH1, ADC_CH2, ADC_CH3, ADC_CH4};
+    for (i = 0; i < 6; i++) {
+        SetChanADC(sensor_ch[i]);
+        ConvertADC();
+        while (BusyADC());
+        sensor_reading[i] = ReadADC() >> 2;
+    }
 }
 
 void StartCapture(void)
@@ -238,11 +242,12 @@ void read_angle(unsigned char* no_line, int* angle_error){
 
     //servo test
     float pot_angle;
-    unsigned char pot_value;
-    pot_value = read_adc();
+    unsigned char pot_value = 0;
+    read_adc();
     pot_angle = (float)pot_value / 255.0 * 120.0;
     pot_angle -= 60;
-    *angle_error = (int)(pot_angle - servo_angle);
+    dir_setpt = pot_angle;
+    *angle_error = (int)(servo_angle - dir_setpt);
     *no_line = 1;
 }
 unsigned char check_stop(){
@@ -256,7 +261,7 @@ unsigned char check_stop(){
 void local_global_var_init() {
     angle_integral = 0;
     last_angle = 0;
-    new_val_read = 0 ;
+    servo_angle = 0;
 }
 
 void direction_pid(int angle_error){
