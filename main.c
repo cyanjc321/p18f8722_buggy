@@ -23,8 +23,6 @@
 /* Global Variable Declaration                                                */
 /******************************************************************************/
 
-extern volatile char RB0InterruptFlag,Timer0InterruptFlag,Timer1InterruptFlag,CaptureInterruptFlag,senseRequest;
-unsigned int  encoderCount  = 0;
 unsigned char robotDirection;
 unsigned int speed, pidOutput;
 char str[15];

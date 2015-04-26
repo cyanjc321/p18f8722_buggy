@@ -60,6 +60,17 @@ const char sensor_weight[] = {43, 27, 6, -7, -26, -43};
   #define Timer1Flag       PIR1bits.TMR1IF
   #define RB0Flag          INTCONbits.RBIF
 #endif
+
+/******************************************************************************/
+/* Global Variables                                                           */
+/******************************************************************************/
+volatile char  RB0InterruptFlag, Timer0InterruptFlag,Timer1InterruptFlag,CaptureInterruptFlag;
+volatile unsigned char received[125]; //Enough to hold UART receive values
+volatile unsigned int timerRolloverCount;
+volatile unsigned char senseRequest;
+volatile unsigned char pwm_state;
+volatile unsigned int pulse_ontime;
+
 /******************************************************************************/
 /* System Function Prototypes                                                 */
 /******************************************************************************/

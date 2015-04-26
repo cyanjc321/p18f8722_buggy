@@ -5,14 +5,10 @@
 #include <xc.h>         /* XC8 General Include File */
 #include <stdint.h>         /* For uint8_t definition */
 #include <stdbool.h>        /* For true/false definition */
-#include "system.h"
 #include <plib.h>
 #include <p18f8722.h>
 
-extern volatile unsigned int timerRolloverCount;
-extern volatile unsigned char pwm_state;
-extern volatile unsigned int pulse_ontime;
-extern volatile unsigned char pot_value, new_val_read;
+#include "system.h"
 
 static int last_angle;
 static int angle_integral;
@@ -110,13 +106,15 @@ void ConfigPorts(void)
     TRISGbits.TRISG0 = 0;
     TRISH = 0xff;
     OpenADC(ADC_FOSC_4 & ADC_RIGHT_JUST & ADC_12_TAD,
-            ADC_CH0 & ADC_INT_ON & ADC_VREFPLUS_VDD & ADC_VREFMINUS_VSS,
+            ADC_CH0 & ADC_INT_OFF & ADC_VREFPLUS_VDD & ADC_VREFMINUS_VSS,
             3);
 }
 
-void start_adc(void) {
+unsigned char read_adc(void) {
     SetChanADC(ADC_CH0);
     ConvertADC();
+    while (BusyADC());
+    return ReadADC() >> 2;
 }
 
 void StartCapture(void)
@@ -240,19 +238,19 @@ void read_angle(unsigned char* no_line, int* angle_error){
 
     //servo test
     float pot_angle;
-    start_adc();
-    while (!new_val_read);
-    new_val_read = 0;
+    unsigned char pot_value;
+    pot_value = read_adc();
     pot_angle = (float)pot_value / 255.0 * 120.0;
     pot_angle -= 60;
     *angle_error = (int)(pot_angle - servo_angle);
     *no_line = 1;
 }
 unsigned char check_stop(){
-    if (angle_integral < STOP_ERROR_MIN)
-        return 1;
-    else
-        return 0;
+//    if (angle_integral < STOP_ERROR_MIN)
+//        return 1;
+//    else
+//        return 0;
+    return (angle_integral < STOP_ERROR_MIN) ? 1 : 0;
 }
 
 void local_global_var_init() {
