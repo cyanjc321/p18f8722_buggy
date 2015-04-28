@@ -20,7 +20,8 @@
 
 //const char sensor_weight[] = {-43, -26, -7, 6, 27, 43};  //adjust these value according to relative spacing between sensors
 /* sensor config: pair 6 5 4 3 2 1 */
-const char sensor_weight[] = {43, 27, 6, -7, -26, -43};
+const char sw_d[] = {43, 27, 6, -7, -26, -43};
+const char sw_a[] = {};
 
 unsigned int setpoint = 200; // Setpoint for the motors in RPM
 #define SPEED_KP    5.0
@@ -96,7 +97,11 @@ void OpenTmr0(void);
 unsigned int calculateSpeed(void);
 unsigned int calculateSpeedPID(unsigned int, unsigned int);
 
-void read_angle(unsigned char* no_line, int* angle);
+void config_sensor_digital(void);
+void config_sensor_analog(void);
+
+void read_sensor_digital(unsigned char* no_line, int* angle_error);
+void read_sensor_analog(unsigned char* no_line, int* angle_error);
 unsigned char check_stop(void);
 
 unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsigned char resolution);

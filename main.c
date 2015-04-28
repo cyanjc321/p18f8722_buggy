@@ -38,6 +38,7 @@ void main(void)
 
     local_global_var_init();
     ConfigPorts();
+    config_sensor_digital();
     ConfigMotors();
     ConfigServo();
     OpenTmr0();
@@ -53,7 +54,7 @@ void main(void)
     loop_forever{
       if (senseRequest) {
           senseRequest = 0;
-          read_angle(&no_line, &angle);
+          read_sensor_digital(&no_line, &angle);
           direction_pid(angle);
           if (no_line)
               stop = check_stop();

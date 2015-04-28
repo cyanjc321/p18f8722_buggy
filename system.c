@@ -12,7 +12,6 @@
 
 static int last_angle;
 static int angle_integral;
-static float servo_angle;
 static unsigned char sensor_reading[6];
 
 
@@ -105,9 +104,6 @@ void ConfigPorts(void)
     TRISDbits.TRISD0 = 0; //set RD0 as output
     TRISGbits.TRISG3 = 1; //input for encoder capture
     TRISGbits.RG0 = 0;
-    OpenADC(ADC_FOSC_4 & ADC_RIGHT_JUST & ADC_20_TAD,
-            ADC_CH0 & ADC_INT_OFF & ADC_VREFPLUS_VDD & ADC_VREFMINUS_VSS,
-            0);
 }
 
 void read_adc(void) {
@@ -220,36 +216,32 @@ unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsi
     instr = (unsigned long)ms * (SYS_FREQ / 1000) / prescaler / 4;
     ret = 1 << resolution - 1;
     ret = ret - instr;
-     return (unsigned int)ret;
+    return (unsigned int)ret;
 }
 
-void read_angle(unsigned char* no_line, int* angle_error){
-    //TODO check if neccessary to scale angle_error to achieve better precision
-    //unsigned char sensor_val;
-    //unsigned char i, n;
-    //sensor_val = PORTH;
-    //*no_line = !sensor_val;
-    //*angle_error = 0;
-    //n = 0;
-    //for (i = 0; i < 6; i++) {
-    //    if (sensor_val & (1 << i)) {
-    //        *angle_error += sensor_weight[i];
-    //        n++;
-    //    }
-    //}
-
-    //*angle_error = *angle_error / n;
-
-    //servo test
-    float pot_angle;
-    unsigned char pot_value = 0;
-    read_adc();
-    pot_angle = (float)pot_value / 255.0 * 120.0;
-    pot_angle -= 60;
-    dir_setpt = pot_angle;
-    *angle_error = (int)(servo_angle - dir_setpt);
-    *no_line = 1;
+void config_sensor_digital(void) {
+    ADCON1 = 0xff;
+    TRISH = 0xff;
 }
+
+void config_sensor_analog(void) {
+    OpenADC(ADC_FOSC_4 & ADC_RIGHT_JUST & ADC_20_TAD,
+            ADC_CH0 & ADC_INT_OFF & ADC_VREFPLUS_VDD & ADC_VREFMINUS_VSS,
+            0);
+}
+void read_sensor_digital(unsigned char* no_line, int* angle_error){
+    unsigned char reading, i;
+    reading = PORTH;
+    *angle_error = 0;
+    *no_line = !reading;
+    for (i = 0; i < 6; i++)
+        if ((reading >> i) & 0x1)
+            *angle_error += (sw_d[i]);
+}
+
+void read_sensor_analog(unsigned char* no_line, int* angle_error) {
+}
+
 unsigned char check_stop(){
 //    if (angle_integral < STOP_ERROR_MIN)
 //        return 1;
@@ -261,11 +253,11 @@ unsigned char check_stop(){
 void local_global_var_init() {
     angle_integral = 0;
     last_angle = 0;
-    servo_angle = 0;
 }
 
 void direction_pid(int angle_error){
     int angle_derivative;
+    float servo_angle;
 
     angle_integral += angle_error;
     angle_derivative = angle_error - last_angle;
