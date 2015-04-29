@@ -15,13 +15,13 @@ void interrupt isr(void)
       //not using this yet
   }
 
-  if(CCP2IE && CCP2IF){ //Encoder Capture interrupt
+  if(CCP4IE && CCP4IF){ //Encoder Capture interrupt
       CCP2IF = 0;
       CaptureInterruptFlag = 1;
   }
   
-  if(TMR1IE && TMR1IF){ //Timer 0 interrupt
-      TMR1IF = 0;  // Clear flag
+  if(TMR3IE && TMR3IF){ //Timer 0 interrupt
+      TMR3IF = 0;  // Clear flag
       timerRolloverCount++;
       LATDbits.LATD0 = !LATDbits.LATD0; //toggle IO line to show interrupt
    }
@@ -31,17 +31,17 @@ void interrupt isr(void)
       senseRequest = 1;
   }
 
-  if (TMR3IE && TMR3IF) {
-      TMR3IF = 0;
+  if (TMR1IE && TMR1IF) {
+      TMR1IF = 0;
       if (pwm_state) {
           pwm_state = 0;
           SERVO_OP = 1;
-          TMR3 = 65535 - (PULSE_PERIOD - pulse_ontime);
+          TMR1 = 65535 - (PULSE_PERIOD - pulse_ontime);
       }
       else {
           pwm_state = 1;
           SERVO_OP = 0;
-          TMR3 = 65535 - (pulse_ontime);
+          TMR1 = 65535 - (pulse_ontime);
       }
   }
 }

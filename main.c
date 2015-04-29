@@ -49,8 +49,7 @@ void main(void)
   
     enableMotors;
     //disableMotors;
-    SetDCPWM1(950);
-
+    SetDCPWM1(1023);
     loop_forever{
       if (senseRequest) {
           senseRequest = 0;
@@ -62,7 +61,7 @@ void main(void)
               stop = 0;
       }
       if (stop) {
-          disableMotors;
+          SetDCPWM1(1023);
       }
       else {
         if(CaptureInterruptFlag){

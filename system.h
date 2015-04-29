@@ -14,24 +14,23 @@
 /* timer overflow period in ms*/
 #define Timer0Period_ms     10
 
-#define STOP_ERROR_MIN     10
+#define STOP_ERROR_MIN     20
 
 #define BAUD_RATE        9600 //
 
 //const char sensor_weight[] = {-43, -26, -7, 6, 27, 43};  //adjust these value according to relative spacing between sensors
 /* sensor config: pair 6 5 4 3 2 1 */
-const char sw_d[] = {43, 27, 6, -7, -26, -43};
-const char sw_a[] = {};
+const signed char sw_d[] = {43, 27, 6, -7, -26, -43};
+const signed char sw_a[] = {0};
 
 unsigned int setpoint = 200; // Setpoint for the motors in RPM
 #define SPEED_KP    5.0
 #define SPEED_KI    10.0
 #define SPEED_KD    0.0
 
-float dir_setpt = 0;
-#define SERVO_KP    2.0
+#define SERVO_KP    1.0
 #define SERVO_KI    0.5
-#define SERVO_KD    1.0
+#define SERVO_KD    0.0
 
 //servo output pin
 #define SERVO_OP       LATGbits.LATG0

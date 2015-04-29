@@ -123,12 +123,10 @@ void StartCapture(void)
 /* This just configs the encoder to fire an interrupt on every 16'th rising   */
 /* edge of pin RG3                                                            */
 /******************************************************************************/
-    T3CONbits.T3CCP1 = 0; //see page 180 in data sheet
-    T3CONbits.T3CCP2 = 0;
     TRISGbits.TRISG3 = 1; //input for encoder capture
-    OpenTimer1(TIMER_INT_ON & T1_16BIT_RW & T1_SOURCE_INT & T1_PS_1_8
-            & T1_OSC1EN_OFF & T1_SYNC_EXT_OFF & T12_CCP12_T34_CCP345);
-    OpenCapture2(CAPTURE_INT_ON & CAP_EVERY_16_RISE_EDGE);
+    OpenTimer3(TIMER_INT_ON & T3_16BIT_RW & T3_SOURCE_INT & T3_PS_1_8
+            & T3_SYNC_EXT_OFF & T12_CCP12_T34_CCP345);
+    OpenCapture4(CAPTURE_INT_ON & C4_EVERY_16_RISE_EDGE);
 }
 
 void ConfigMotors(void)
@@ -152,11 +150,11 @@ void ConfigMotors(void)
 }
 
 void ConfigServo(void) {
-    OpenTimer3(TIMER_INT_ON & T3_16BIT_RW & T3_PS_1_8 & T3_SOURCE_INT & T3_SYNC_EXT_OFF);
+    OpenTimer1(TIMER_INT_ON & T1_16BIT_RW & T1_PS_1_8 & T1_SOURCE_INT & T1_SYNC_EXT_OFF & T1_OSC1EN_OFF & T12_CCP12_T34_CCP345);
     pulse_ontime = PULSE_MID;
     pwm_state = 1;
     SERVO_OP = 0;
-    TMR3 = 65535 - (pulse_ontime);
+    TMR1 = 65535 - (pulse_ontime);
 }
 
 unsigned int calculateSpeed(void)
@@ -170,13 +168,13 @@ unsigned int calculateSpeed(void)
     static unsigned long time_long;
     float time;
 
-    time = (float)(1.67 * timerRolloverCount)+(TMR0/39062.5);
+    time = (float)(1.67 * timerRolloverCount)+(TMR3/39062.5);
     time = 1/(14*(0.75 * time)); //rps remember 14:1 gearing
     speed = (unsigned int)(60*time); //RPM
 
     //clear rollover count and timer
     timerRolloverCount = 0;
-    TMR0 = 0; 
+    TMR3 = 0;
     return speed;
 }
 
@@ -222,6 +220,7 @@ unsigned int TMRPeriod_ms_to_instr(unsigned int ms, unsigned int prescaler, unsi
 void config_sensor_digital(void) {
     ADCON1 = 0xff;
     TRISH = 0xff;
+    TRISA = 0xff;
 }
 
 void config_sensor_analog(void) {
@@ -230,23 +229,28 @@ void config_sensor_analog(void) {
             0);
 }
 void read_sensor_digital(unsigned char* no_line, int* angle_error){
-    unsigned char reading, i;
-    reading = PORTH;
+    unsigned char reading_a, reading_h, reading, i;
+    reading_a = PORTA & 0b00101111;
+    reading_h = PORTH & 0b00010000;
+    reading = (reading_a & 0b00001110) << 1;
+    reading = reading | (reading_a & 0b00100001);
+    reading = reading | (reading_h >> 3);
+    reading = ~reading;
+    reading = reading & 0b00111111;
     *angle_error = 0;
     *no_line = !reading;
-    for (i = 0; i < 6; i++)
-        if ((reading >> i) & 0x1)
-            *angle_error += (sw_d[i]);
+    if (*no_line)
+        *angle_error = last_angle;
+    else
+        for (i = 0; i < 6; i++)
+            if ((reading >> i) & 0x1)
+                *angle_error += ((int)sw_d[i]);
 }
 
 void read_sensor_analog(unsigned char* no_line, int* angle_error) {
 }
 
 unsigned char check_stop(){
-//    if (angle_integral < STOP_ERROR_MIN)
-//        return 1;
-//    else
-//        return 0;
     return (angle_integral < STOP_ERROR_MIN) ? 1 : 0;
 }
 
@@ -266,7 +270,7 @@ void direction_pid(int angle_error){
     if (servo_angle < -60)     servo_angle = -60;
     else
         if (servo_angle > 60)  servo_angle = 60;
-    pulse_ontime = (unsigned int)(PULSE_MID + PULSE_ANGLE_RATIO * servo_angle);
+    pulse_ontime = (unsigned int)(PULSE_MID - PULSE_ANGLE_RATIO * servo_angle);
 
     last_angle = angle_error;
 }
